@@ -10,9 +10,34 @@ ANSWERS
  m.f_id=f.f_id GROUP BY m.f_id;
 
 3. Find top restaurant in terms of number of orders for a given month
+SELECT r.r_name,  COUNT(*) AS 'month' FROM orders o JOIN restaurants r ON o.r_id =r.r_id  WHERE MONTHNAME(date) LIKE 'JUNE' GROUP BY o.r_id ORDER BY COUNT (*) DESC LIMIT 1;
  
 4. Restaurant with monthly sales greater than X
+SELECT r.r_name,  SUM(amount) AS 'revenue' 
+FROM orders o
+JOIN restaurants r ON o.r_id =r.r_id 
+WHERE MONTHNAME(date) LIKE 'JUNE' 
+GROUP BY o.r_id 
+HAVING revenue >500;
+
 5. Show all orders with order details for a particular customer in particular date range
+
+ SELECT o.order_id, r.r_name ,f.f_name FROM orders o JOIN restaurants r ON o.r_id =r.r_id
+JOIN order_details od on o.order_id =od.order_id
+JOIN food f ON f.f_id =od.f_id WHERE user_id =( SELECT user_id FROM users WHERE name LIKE 'Ankit') AND (date>'2022-06-10' AND date<'2022-07-10');
+   
 6. Find restaurants with Max repeated customers 
-7. Month over month revenue growth of Swiggy 
+SELECT r.r_name, COUNT(*) AS 'loyal_customers' FROM ( SELECT r_id, user_id, COUNT (*) AS 'visits' FROM orders GROUP BY r_id,user_id HAVING visits>1) t JOIN restaurants r ON r.r_id =t.r_id GROUP BY t.r_id ORDER BY loyal_customers DESC LIMIT 1;
+
+7. Month over month revenue growth of Swiggy
+   SELECT month, ((revenue-prev)/prev)*100      FROM 
+WITH sales AS(
+SELECT monthname(date) AS 'month', SUM(amount) as 'revenue'
+FROM orders
+GROUP BY month
+ORDER BY MONTH(date))
+SELECT month, revenue ,LAG(revenue,1) OVER (ORDER BY revenue) AS prev FROM sales);
+
 8. Customer - Favorite fruit
+
+  WITH temp AS( SELECT o.user_id,od.f_id, COUNT(*) AS 'frequency' FROM orders o JOIN order_details od on o.order_id =od.order_id GROUP BY o.user_id,od.f_id) SELECT u.name, f.f_name,t1.frequency from temp t1 JOIN users u ON u.user_id=t1.user_id JOIN food f ON f.f_id = t1.f_id WHERE t1.frequency = ( SELECT MAX(frequency) from temp t2 where t2.user_id =t1.user_id);
